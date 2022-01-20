@@ -32,7 +32,11 @@ ui <- fluidPage(
                   label = "Number of bins:",
                   min = 1997,
                   max = 2019,
-                  value = c(1997,2019))
+                  value = c(1997,2019)),
+      selectInput("developer",
+                  label = "Developer:",
+                  choices = unique(df_data$developer),
+                  selected = 'Valve')
       
     ),
     
@@ -40,7 +44,8 @@ ui <- fluidPage(
     mainPanel(
       
       # Output: Histogram ----
-      plotOutput(outputId = "plot1")
+      #plotOutput(outputId = "plot1")
+      plotOutput(outputId = "plot3")
       
     )
   )
@@ -54,16 +59,28 @@ server <- function(input, output) {
     #data['year'] <-  format(as.Date(data$release_date,'%Y-%m-%d'),"%Y")
     #data$release_date <- NULL
     data1=response1()
-    genre_per_year = data1 %>%  group_by(year, genres, owners) %>% summarise(total=n())
 
-    separated=separate_rows(genre_per_year, genres, sep=";")
-    good = separated %>%  group_by(year, genres, owners) %>% summarise(total=sum(total))
-    final = good %>%  group_by(year, genres) %>% summarise(owners=sum(owners))
+    separated=separate_rows(data1, genres, sep=";")
+    final1 = separated %>%  group_by(year,genres) %>% summarise(owners=sum(owners))
     
-    ggplot(final, aes(x = year, y = owners, fill = genres)) +
+    ggplot(final1, aes(x = year, y = owners, fill = genres)) +
       geom_stream()
   })
   
+  ########PLOT 3#############
+  response3 <- reactive({filter(df_data, df_data$developer == input$developer)})
+  output$plot3 <- renderPlot({
+    data3=response3()
+    data3$price[data3$price == 0.00] <- 1.00
+    data3['revenue'] = data3$price * data3$owners
+    
+    separated=separate_rows(data3, genres, sep=";")
+    dev_genre = separated %>%  group_by(genres) %>% summarise(revenue=sum(revenue))
+    ggplot(dev_genre, aes(x=as.factor(genres),y=as.factor(revenue) )) + 
+      geom_bar( ) +
+      scale_fill_brewer(palette = "Set1") +
+      theme(legend.position="none")
+  })
 }
 # Create Shiny app ----
 shinyApp(ui = ui, server = server)
