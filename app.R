@@ -10,7 +10,11 @@ data$release_date <- NULL
 library(maps)
 library(mapproj)
 library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggstream)
 
+df_data=data.frame(data)
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
   
@@ -24,11 +28,11 @@ ui <- fluidPage(
     sidebarPanel(
       
       # Input: Slider for the number of bins ----
-      sliderInput(inputId = "year",
+      sliderInput("year",
                   label = "Number of bins:",
-                  min = 1977,
+                  min = 1997,
                   max = 2019,
-                  value = c(1077,2019))
+                  value = c(1997,2019))
       
     ),
     
@@ -44,7 +48,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
 #####PLOT 1###########
-  response1 <- reactive({filter(data, between(year, input$year[1], input$year[2]))})
+  response1 <- reactive({filter(df_data, between(year, input$year[1], input$year[2]))})
   
   output$plot1 <- renderPlot({
     #data['year'] <-  format(as.Date(data$release_date,'%Y-%m-%d'),"%Y")
