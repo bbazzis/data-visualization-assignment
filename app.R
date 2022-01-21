@@ -1,5 +1,5 @@
 library(shiny)
-
+library(shinyalert)
 #link: https://www.kaggle.com/nikdavis/steam-store-games
 
 # Read data
@@ -15,6 +15,7 @@ library(ggplot2)
 library(ggstream)
 
 df_data=data.frame(data)
+df_data=separate_rows(df_data, developer, sep=";")
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
   
@@ -36,9 +37,12 @@ ui <- fluidPage(
       selectInput("developer",
                   label = "Developer:",
                   choices = unique(df_data$developer),
-                  selected = 'Valve')
+                  selected = 'Valve'),
+      radioButtons(inputId="age", label="Age >=", 
+                   choices=c(0,16,18), selected=0)
       
     ),
+    
     
     # Main panel for displaying outputs ----
     mainPanel(
@@ -68,18 +72,28 @@ server <- function(input, output) {
   })
   
   ########PLOT 3#############
-  response3 <- reactive({filter(df_data, df_data$developer == input$developer)})
+
+  response3 <- reactive({df_data %>% filter(developer == input$developer) %>%
+      filter(required_age >= input$age)
+      })
+  
   output$plot3 <- renderPlot({
     data3=response3()
-    data3$price[data3$price == 0.00] <- 1.00
-    data3['revenue'] = data3$price * data3$owners
+    if(nrow(data3) == 0){
+      shinyalert("Oops!", "No games with that age requirement from the chosen developer", type = "error")
+    }
+    else{
+      data3$price[data3$price == 0.00] <- 1.00
+      data3['revenue'] = data3$price * data3$owners
+      
+      separated=separate_rows(data3, genres, sep=";")
+      dev_genre = separated %>%  group_by(genres) %>% summarise(revenue=sum(revenue))
+      ggplot(dev_genre, aes(x=genres, y=revenue )) + 
+        geom_bar(stat='identity', width=0.5 ) +
+        # geom_text(aes(label=revenue), vjust=1.6,color="white", size=3.5)+
+        scale_color_brewer(palette = "Dark2") 
+    }
     
-    separated=separate_rows(data3, genres, sep=";")
-    dev_genre = separated %>%  group_by(genres) %>% summarise(revenue=sum(revenue))
-    ggplot(dev_genre, aes(x=as.factor(genres),y=as.factor(revenue) )) + 
-      geom_bar( ) +
-      scale_fill_brewer(palette = "Set1") +
-      theme(legend.position="none")
   })
 }
 # Create Shiny app ----
