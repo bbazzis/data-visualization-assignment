@@ -37,7 +37,10 @@ static_plot2_data = plot2data %>%
   remove_rownames() %>% 
   column_to_rownames(var="categories")
 static_plot2_data[is.na(static_plot2_data)] <- 0
-ht = Heatmap(as.matrix(static_plot2_data))
+# The way that the clustering algorithm arguments are passed to 
+# the Interactive Complex Heatmap is opposite of the default pplot heatmap. 
+# TRUE indicates that the sorting is done based on the data, not the column/row names, unlike the original heatmap.
+ht = Heatmap(as.matrix(static_plot2_data), cluster_rows = TRUE, cluster_columns = TRUE)
 ht = draw(ht)
 
 ## Prepare subplot 2 data
