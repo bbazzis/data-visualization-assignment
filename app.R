@@ -79,8 +79,7 @@ ui <- fluidPage(
                   tabPanel("Popularity", plotOutput(outputId = "plot1")),
                   tabPanel("Revenue", InteractiveComplexHeatmapOutput(response = "click", 
                                                                       output_ui = plotOutput("subplot", width = 400, height = 400))),
-                  tabPanel("Developer Performance", plotOutput(outputId = "plot3")),
-                  tabPanel("Debug Output", verbatimTextOutput("summary"))
+                  tabPanel("Developer Performance", plotOutput(outputId = "plot3"))
       )
     )
   )
@@ -95,6 +94,8 @@ click_action = function(df, output) {
       i2 = df$row_index
       col = colnames(static_plot2_data)[i1]
       row = rownames(static_plot2_data)[i2]
+      print(col)
+      print(row)
       
       filteredData = filter(subplot2data, genres == col & categories == row)
       filteredData = filteredData[, c(3,4)]
@@ -103,15 +104,17 @@ click_action = function(df, output) {
         summarise(profit=mean(avg_annual_profit)) %>% 
         spread(year, profit) %>% 
         ungroup()
-      
-      filteredData = as.data.frame(filteredData)
-      filteredData = t(filteredData)
-
-      xValue <- rownames(filteredData)
-      yValue <- filteredData[,1]
-
-      plot(xValue,yValue, type="l", col="red", lwd=5, xlab="time", ylab="concentration")
-      
+      if(nrow(filteredData)*ncol(filteredData) == 0) {
+        grid.text("Insufficient data for the selected combination")
+      } else {
+        
+        filteredData = as.data.frame(filteredData)
+        filteredData = t(filteredData)
+        xValue <- rownames(filteredData)
+        yValue <- filteredData[,1]
+  
+        plot(xValue,yValue, type="l", col="red", lwd=5, xlab="year", ylab="Average annual profit")
+      }
       
     }
   })
@@ -162,13 +165,6 @@ server <- function(input, output, session) {
         # geom_text(aes(label=revenue), vjust=1.6,color="white", size=3.5)+
         scale_color_brewer(palette = "Dark2")
     }
-  })
-  ##DEBUG OUTPUT - REMOVE WHEN DONE
-  output$summary <- renderText({
-    paste("Current Selections:\n", 
-          "Years: ", input$year[1], "and", input$year[2], "\n",
-          "Developer: ", input$developer, "\n",
-          "Age: ", input$age)
   })
 }
 # Create Shiny app ----
