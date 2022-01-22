@@ -143,7 +143,8 @@ server <- function(input, output, session) {
     final1 = separated %>%  group_by(year,genres) %>% summarise(owners=sum(owners))
 
     ggplot(final1, aes(x = year, y = owners, fill = genres)) +
-      geom_stream()
+      geom_stream() + 
+      scale_fill_brewer(palette="Set3")
   })
   ########PLOT 2#############
 
