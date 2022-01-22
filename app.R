@@ -20,6 +20,7 @@ library(dplyr)
 library(ggplot2)
 library(ggstream)
 library(ComplexHeatmap)
+library(grid)
 
 df_data=data.frame(data)
 df_data=separate_rows(df_data, developer, sep=";")
@@ -80,8 +81,12 @@ ui <- fluidPage(
       
       tabsetPanel(type = "tabs",
                   tabPanel("Popularity", plotOutput(outputId = "plot1")),
-                  tabPanel("Revenue", InteractiveComplexHeatmapOutput(response = "click", 
-                                                                      output_ui = plotOutput("subplot", width = 400, height = 400))),
+                  tabPanel("Revenue", 
+                           InteractiveComplexHeatmapOutput(
+                             response = "click", 
+                             width1 = 600, 
+                             height1 = 600,
+                             output_ui = plotOutput("subplot", width = 400, height = 400))),
                   tabPanel("Developer Performance", plotOutput(outputId = "plot3"))
       )
     )
