@@ -1,3 +1,7 @@
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("InteractiveComplexHeatmap")
 library(shiny)
 library(shinyalert)
 #link: https://www.kaggle.com/nikdavis/steam-store-games
@@ -15,10 +19,33 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(ggstream)
+library(ComplexHeatmap)
 
 df_data=data.frame(data)
 df_data=separate_rows(df_data, developer, sep=";")
-# Define UI for app that draws a histogram ----
+
+## Data for the interactive heatmap
+plot2data = data.frame(data[, c('categories', 'genres', 'avg_annual_profit')])
+plot2data = separate_rows(plot2data, genres, sep=";")
+plot2data = separate_rows(plot2data, categories, sep=";")
+
+static_plot2_data = plot2data %>%  
+  group_by(genres, categories) %>% 
+  summarise(profit=mean(avg_annual_profit)) %>% 
+  spread(genres, profit) %>% 
+  ungroup() %>%
+  remove_rownames() %>% 
+  column_to_rownames(var="categories")
+static_plot2_data[is.na(static_plot2_data)] <- 0
+ht = Heatmap(as.matrix(static_plot2_data))
+ht = draw(ht)
+
+## Prepare subplot 2 data
+subplot2data = data.frame(data[, c('categories', 'genres', 'avg_annual_profit', 'year')])
+subplot2data = separate_rows(subplot2data, genres, sep=";")
+subplot2data = separate_rows(subplot2data, categories, sep=";")
+
+# Define UI for app that draws the plots ----
 ui <- fluidPage(
   
   # App title ----
@@ -45,20 +72,51 @@ ui <- fluidPage(
       
     ),
     
-    
     # Main panel for displaying outputs ----
     mainPanel(
       
       tabsetPanel(type = "tabs",
                   tabPanel("Popularity", plotOutput(outputId = "plot1")),
-                  tabPanel("Revenue", plotOutput(outputId = "plot2")),
+                  tabPanel("Revenue", InteractiveComplexHeatmapOutput(response = "click", 
+                                                                      output_ui = plotOutput("subplot", width = 400, height = 400))),
                   tabPanel("Developer Performance", plotOutput(outputId = "plot3")),
                   tabPanel("Debug Output", verbatimTextOutput("summary"))
       )
     )
   )
 )
-# Define server logic required to draw a histogram ----
+# ## Interactive heatmap click action
+click_action = function(df, output) {
+  output$subplot = renderPlot({
+    if(is.null(df)) {
+      grid.text("Click on a heatmap cell to visualize this plot \nfor the selected row-column details.")
+    } else {
+      i1 = df$column_index
+      i2 = df$row_index
+      col = colnames(static_plot2_data)[i1]
+      row = rownames(static_plot2_data)[i2]
+      
+      filteredData = filter(subplot2data, genres == col & categories == row)
+      filteredData = filteredData[, c(3,4)]
+      filteredData = filteredData %>%  
+        group_by(year) %>% 
+        summarise(profit=mean(avg_annual_profit)) %>% 
+        spread(year, profit) %>% 
+        ungroup()
+      
+      filteredData = as.data.frame(filteredData)
+      filteredData = t(filteredData)
+
+      xValue <- rownames(filteredData)
+      yValue <- filteredData[,1]
+
+      plot(xValue,yValue, type="l", col="red", lwd=5, xlab="time", ylab="concentration")
+      
+      
+    }
+  })
+}
+# Define server logic required to draw the plots
 server <- function(input, output, session) {
   updateSelectizeInput(session, 'developer', choices = sort(unique(df_data$developer)), selected="Valve", server = TRUE)
   
@@ -77,32 +135,10 @@ server <- function(input, output, session) {
       geom_stream()
   })
   ########PLOT 2#############
-  ######## main #############
-  output$plot2 <- renderPlot({
-    
-    plot2data = data.frame(data[, c('categories', 'genres', 'avg_annual_profit')])
-    plot2data = separate_rows(plot2data, genres, sep=";")
-    plot2data = separate_rows(plot2data, categories, sep=";")
-    
-    usable_data = plot2data %>%  
-      group_by(genres, categories) %>% 
-      summarise(profit=mean(avg_annual_profit)) %>% 
-      spread(genres, profit) %>% 
-      ungroup()
-    usable_data[is.na(usable_data)] <- 0
-    viewable_data <- usable_data %>%
-      gather(colname, value, -categories)
-    ggplot(viewable_data, aes(x = colname, y = categories, fill = value)) +
-      geom_tile() + 
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-      labs(x = "Genres", y="Categories", value="Mean Annual Revenue")
-  })
+
   
-  
-  
-  ########linked#############
-  
-  
+  makeInteractiveComplexHeatmap(input, output, session, ht,
+                                click_action = click_action)
   
   ########PLOT 3#############
 
