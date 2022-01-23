@@ -1,9 +1,9 @@
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
+#install.packages("BiocManager")
+#BiocManager::install("InteractiveComplexHeatmap")
 
-BiocManager::install("InteractiveComplexHeatmap")
 library(shiny)
 library(shinyalert)
+library(BiocManager)
 #link: https://www.kaggle.com/nikdavis/steam-store-games
 
 # Read data
@@ -20,6 +20,7 @@ library(dplyr)
 library(ggplot2)
 library(ggstream)
 library(ComplexHeatmap)
+library(InteractiveComplexHeatmap)
 library(grid)
 
 df_data=data.frame(data)
