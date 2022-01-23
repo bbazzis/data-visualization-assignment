@@ -22,6 +22,7 @@ library(ggstream)
 library(ComplexHeatmap)
 library(InteractiveComplexHeatmap)
 library(grid)
+library(tibble)
 
 df_data=data.frame(data)
 df_data=separate_rows(df_data, developer, sep=";")
@@ -52,43 +53,41 @@ subplot2data = separate_rows(subplot2data, categories, sep=";")
 
 # Define UI for app that draws the plots ----
 ui <- fluidPage(
-  
   # App title ----
   titlePanel("Steam games sales analysis"),
-  
-  # Sidebar layout with input and output definitions ----
-  sidebarLayout(
-    
-    # Sidebar panel for inputs ----
-    sidebarPanel(
-      
-      # Input: Slider for the number of bins ----
-      sliderInput("year",
-                  label = "Games published between:",
-                  min = 1997,
-                  max = 2019,
-                  value = c(1997,2019)),
-      selectizeInput("developer",
-                  label = "Developer:",
-                  choices = NULL,
-                  options = list(maxOptions = 30000)),
-      radioButtons(inputId="age", label="Age >=", 
-                   choices=c(0,16,18), selected=0)
-      
+  tabsetPanel(type = "tabs",
+    tabPanel("Popularity", 
+      sidebarLayout(
+        sidebarPanel(
+          sliderInput("year",
+            label = "Games published between:",
+            min = 1997,
+            max = 2019,
+            value = c(1997,2019)
+          )
+        ),
+        mainPanel(plotOutput(outputId = "plot1"))
+      )
     ),
-    
-    # Main panel for displaying outputs ----
-    mainPanel(
-      
-      tabsetPanel(type = "tabs",
-                  tabPanel("Popularity", plotOutput(outputId = "plot1")),
-                  tabPanel("Revenue", 
-                           InteractiveComplexHeatmapOutput(
-                             response = "click", 
-                             width1 = 600, 
-                             height1 = 600,
-                             output_ui = plotOutput("subplot", width = 400, height = 400))),
-                  tabPanel("Developer Performance", plotOutput(outputId = "plot3"))
+    tabPanel("Revenue", 
+      InteractiveComplexHeatmapOutput(
+        response = "click", 
+        width1 = 600, 
+        height1 = 600,
+        output_ui = plotOutput("subplot", width = 400, height = 400)
+      )
+    ),
+    tabPanel("Developer Performance", 
+      sidebarLayout(
+        sidebarPanel(
+          selectizeInput("developer",
+            label = "Developer:",
+            choices = NULL,
+            options = list(maxOptions = 30000)),
+          radioButtons(inputId="age", label="Age >=", 
+            choices=c(0,16,18), selected=0)
+        ),
+        mainPanel(plotOutput(outputId = "plot3"))
       )
     )
   )
