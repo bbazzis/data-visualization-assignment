@@ -112,7 +112,7 @@ click_action = function(df, output) {
         summarise(profit=mean(avg_annual_profit)) %>% 
         spread(year, profit) %>% 
         ungroup()
-      if(nrow(filteredData)*ncol(filteredData) == 0) {
+      if(nrow(filteredData)*ncol(filteredData) < 2) {
         grid.text("Insufficient data for the selected combination")
       } else {
         
@@ -144,7 +144,13 @@ server <- function(input, output, session) {
 
     ggplot(final1, aes(x = year, y = owners, fill = genres)) +
       geom_stream() + 
-      scale_fill_brewer(palette="Set3")
+      scale_fill_manual(values=c("#004c6d", "#0083a6", "#00c0d8", "#00ffff",
+                                 "#ff0000", "#ff7331", "#ffa96b", "#ffd6b0",
+                                 "#00ff00", "#00c100", "#008600", "#005000",
+                                 "#dda0dd", "#ba71bf", "#9541a3", "#6f0087",
+                                 "#ff00ff", "#ff75ff", "#ffacff", "#ffdcff",
+                                 "#459436", "#41b730", "#33da24", "#00ff00",
+                                 "#f7a619", "#f8c248", "#fadb71", "#fff39b", "#000000"))
   })
   ########PLOT 2#############
 
