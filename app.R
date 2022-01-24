@@ -1,10 +1,29 @@
 #install.packages("BiocManager")
 #BiocManager::install("InteractiveComplexHeatmap")
+## include system libraries
+library(base)
+library(datasets)
+library(grDevices)
+library(graphics)
+library(methods)
+library(stats)
+library(utils)
 
+## additional libraries
+library(BiocManager)
+library(dplyr)
+library(ComplexHeatmap)
+library(ggplot2)
+library(ggstream)
+library(InteractiveComplexHeatmap)
+library(maps)
+library(mapproj)
 library(shiny)
 library(shinyalert)
-library(BiocManager)
-#link: https://www.kaggle.com/nikdavis/steam-store-games
+library(tibble)
+library(tidyr)
+
+#link to the dataset: https://www.kaggle.com/nikdavis/steam-store-games
 
 # Read data
 data = read.csv("data/clean_games.csv")
@@ -13,16 +32,7 @@ data['year'] <- as.integer(format(as.Date(data$release_date,'%Y-%m-%d'),"%Y"))
 data['active_years'] <- 2022 - data['year']
 data['avg_annual_profit'] <- data['popularity']/data['active_years']
 data$release_date <- NULL
-library(maps)
-library(mapproj)
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-library(ggstream)
-library(ComplexHeatmap)
-library(InteractiveComplexHeatmap)
-library(grid)
-library(tibble)
+
 
 df_data=data.frame(data)
 df_data=separate_rows(df_data, developer, sep=";")
